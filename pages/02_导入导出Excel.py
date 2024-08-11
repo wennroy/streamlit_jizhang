@@ -37,6 +37,7 @@ if uploaded_file is not None:
     with pd.ExcelFile(uploaded_file) as xls:
         if 'records' in xls.sheet_names and 'comment' in xls.sheet_names:
             records_df = pd.read_excel(xls, sheet_name='records')
+            user_set = set()
             comments_df = pd.read_excel(xls, sheet_name='comment')
 
             # 计算新的 record_id 和 id 的起始值
@@ -47,6 +48,8 @@ if uploaded_file is not None:
             record_id_map = {}
             for i, row in records_df.iterrows():
                 original_record_id = row['record_id']
+                user_set.add(row["payer"])
+                user_set.add(row["participant"])
                 if original_record_id not in record_id_map:
                     record_id_map[original_record_id] = max_record_id
                     max_record_id += 1
@@ -59,6 +62,11 @@ if uploaded_file is not None:
                     "amount": row["amount"]
                 })
                 max_id += 1
+
+            # Update user
+            for user in user_set:
+                if user not in st.session_state.users:
+                    st.session_state.users.append(user)
 
             # 更新 comments 中的 record_id
             for i, row in comments_df.iterrows():
