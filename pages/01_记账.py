@@ -82,8 +82,6 @@ if st.session_state.records:
     row_to_delete = st.number_input("输入要删除的id", min_value=0, step=1)
     if st.button("删除记录"):
         if len(df) > 0:
-            # TODO: Also delete the corresponding comment information.
-            #  This should be done in the future database version.
             record_id_to_remove = -1
             for ind, row in enumerate(st.session_state.records):
                 if row["id"] == row_to_delete:
