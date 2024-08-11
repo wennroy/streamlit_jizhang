@@ -5,11 +5,17 @@ import pandas as pd
 if 'records' not in st.session_state:
     st.session_state.records = []
 
+if 'comments' not in st.session_state:
+    st.session_state.comments = []
+
 if 'users' not in st.session_state:
     st.session_state.users = []
 
 if 'success' not in st.session_state:
     st.session_state.success = ""
+
+if 'individual_amounts' not in st.session_state:
+    st.session_state.individual_amounts = dict()
 
 st.title("添加用户")
 
