@@ -1,16 +1,8 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
+from db_utils import DB_FILE, execute_query
 from collections import defaultdict
-
-# 初始化数据库连接
-DB_FILE = "bookkeeping.sql"
-@st.cache_resource
-def get_db_connection():
-    conn = sqlite3.connect(DB_FILE)
-    return conn
-
-conn = get_db_connection()
 
 st.title("欠款情况统计")
 
@@ -19,21 +11,37 @@ if not token:
     st.warning("请在第一页输入token以继续。")
     st.stop()
 
+convert_ratios = {}
+
 if token:
-    # 从数据库中加载记录
-    query = "SELECT payer, participant, amount FROM records WHERE token = ?"
-    records_df = pd.read_sql_query(query, conn, params=(token,))
-
-    if not records_df.empty:
-        summary_dict = defaultdict(float)
-
-        # 计算欠款
-        for _, row in records_df.iterrows():
-            summary_dict[row["participant"]] += row["amount"]
-            summary_dict[row["payer"]] -= row["amount"]
-
-        # 转换为 DataFrame
-        summary_df = pd.DataFrame(summary_dict.items(), columns=["参与人", "净欠款金额"])
-        st.dataframe(summary_df)
+    currencies = execute_query("SELECT distinct currency FROM records WHERE token = ?", (token,))
+    if len(currencies) == 1 and currencies[0][0] == "CNY":
+        convert_ratios["CNY"] = 1.0
     else:
-        st.info("目前没有任何记录。")
+        for currency in currencies:
+            currency_name = currency[0]
+            if currency_name == "CNY":
+                convert_ratios["CNY"] = 1.0
+                continue
+            convert_ratios[currency_name] = st.number_input(f"{currency_name}兑CNY汇率", min_value=0.0, format="%0.5f", value=1.0)
+
+    if st.button("没有外币/已完成汇率换算填写"):
+        with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
+            conn.execute("PRAGMA journal_mode=WAL;")
+            cursor = conn.cursor()
+            query = "SELECT payer, participant, amount FROM records WHERE token = ?"
+            records_df = pd.read_sql_query(query, conn, params=(token,))
+
+            if not records_df.empty:
+                summary_dict = defaultdict(float)
+
+                # 计算欠款
+                for _, row in records_df.iterrows():
+                    summary_dict[row["participant"]] += row["amount"]
+                    summary_dict[row["payer"]] -= row["amount"]
+
+                # 转换为 DataFrame
+                summary_df = pd.DataFrame(summary_dict.items(), columns=["参与人", "净欠款金额"])
+                st.dataframe(summary_df)
+            else:
+                st.info("目前没有任何记录。")

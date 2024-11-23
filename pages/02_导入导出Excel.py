@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from db_utils import execute_query, DB_FILE, load_data
 import sqlite3
 from io import BytesIO
 
@@ -14,12 +15,6 @@ conn = get_db_connection()
 
 st.title("导出/导入")
 
-# 导出为 Excel
-@st.cache_data
-def fetch_data(token):
-    records_df = pd.read_sql_query(f"SELECT * FROM records WHERE token = ?", conn, params=(token,))
-    comments_df = pd.read_sql_query(f"SELECT * FROM comments WHERE token = ?", conn, params=(token,))
-    return records_df, comments_df
 
 token = st.session_state.token
 if not token:
@@ -27,7 +22,7 @@ if not token:
     st.stop()
 
 if token:
-    records_df, comments_df = fetch_data(token)
+    records_df, comments_df = load_data(token)
 
     if not records_df.empty or not comments_df.empty:
         output = BytesIO()
