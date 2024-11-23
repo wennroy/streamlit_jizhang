@@ -29,7 +29,7 @@ if token:
         with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
             conn.execute("PRAGMA journal_mode=WAL;")
             cursor = conn.cursor()
-            query = "SELECT payer, participant, amount FROM records WHERE token = ?"
+            query = "SELECT payer, participant, currency, amount FROM records WHERE token = ?"
             records_df = pd.read_sql_query(query, conn, params=(token,))
 
             if not records_df.empty:
@@ -37,8 +37,8 @@ if token:
 
                 # 计算欠款
                 for _, row in records_df.iterrows():
-                    summary_dict[row["participant"]] += row["amount"]
-                    summary_dict[row["payer"]] -= row["amount"]
+                    summary_dict[row["participant"]] += row["amount"] * convert_ratios[row["currency"]]
+                    summary_dict[row["payer"]] -= row["amount"] * convert_ratios[row["currency"]]
 
                 # 转换为 DataFrame
                 summary_df = pd.DataFrame(summary_dict.items(), columns=["参与人", "净欠款金额"])

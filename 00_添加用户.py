@@ -7,9 +7,9 @@ import sqlite3
 def init_db():
     execute_query("""
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
             token TEXT NOT NULL,
-            username TEXT NOT NULL UNIQUE
+            username TEXT NOT NULL
         )
     """)
 
