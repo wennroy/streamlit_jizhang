@@ -17,7 +17,7 @@ def init_db():
 init_db()
 
 # Streamlit 主界面
-st.title("添加用户")
+st.title("输入你的记账Token")
 
 # 输入 token
 if 'token' not in st.session_state:

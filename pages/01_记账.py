@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
-from db_utils import execute_query, DB_FILE, load_data
+from db_utils import execute_query, DB_FILE, load_data, create_merge_view
 
 
 # 创建表结构
@@ -116,11 +116,16 @@ elif mode == "个人金额记录":
 
 records_df, comments_df = load_data(token=token)
 
+merge_result = create_merge_view(records_df, comments_df)
+
 # 显示所有记录
-st.subheader("所有记录")
-st.dataframe(records_df)
-st.subheader("事项记录 (通过 record_id 连接)")
-st.dataframe(comments_df)
+st.subheader("事件查看")
+st.dataframe(merge_result)
+with st.expander("数据库数据"):
+    st.subheader("所有记录")
+    st.dataframe(records_df)
+    st.subheader("事项记录 (通过 record_id 连接)")
+    st.dataframe(comments_df)
 
 # 删除记录
 st.subheader("删除记录")

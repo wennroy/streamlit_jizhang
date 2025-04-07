@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from db_utils import execute_query, DB_FILE, load_data
+from db_utils import execute_query, DB_FILE, load_data, create_merge_view
 import sqlite3
 from io import BytesIO
 
@@ -23,10 +23,11 @@ if not token:
 
 if token:
     records_df, comments_df = load_data(token)
-
+    merge_view_df = create_merge_view(records_df, comments_df)
     if not records_df.empty or not comments_df.empty:
         output = BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
+            merge_view_df.to_excel(writer, index=False, sheet_name="views")
             records_df.to_excel(writer, index=False, sheet_name="records")
             comments_df.to_excel(writer, index=False, sheet_name="comments")
 
